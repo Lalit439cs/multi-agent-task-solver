@@ -168,3 +168,27 @@ multi-agent-task-solver/
 -   **`test_llm_api.py`**: A diagnostic script to verify API connectivity with OpenAI and Google Gemini before running the main application.
 -   **`test_client.py`**: A test script to interact with the running FastAPI server and demonstrate API usage.
 -   **`Dockerfile`**: Defines the containerized environment for running the application with all necessary dependencies.
+
+## Trade-offs Made Due to the 24h Constraint
+
+Given the time limitation, certain design decisions and trade-offs were necessary to deliver a functional multi-agent system:
+
+-   **Local Hosting**: The system is designed to run locally rather than deploying to cloud platforms (AWS, GCP, Azure), which would require additional infrastructure setup and configuration.
+-   **Avoided Local LLM Models**: Instead of setting up and hosting local LLM models (e.g., Ollama, LLaMA), the system relies on cloud-based APIs (OpenAI GPT-4 and Google Gemini) for faster development and more reliable performance.
+-   **Limited Corner Case Testing**: While core functionality is thoroughly tested, comprehensive edge case testing and error handling for all possible scenarios was not fully implemented.
+-   **Code Refactoring**: Some code duplication and opportunities for abstraction exist. Given more time, the codebase could be further modularized and optimized for maintainability.
+-   **Bonus Points Not Addressed**: Additional points mentioned in shared documents were diificult to prioritized within the 24-hour window.
+-   **Simple UI interaction interface**
+
+These trade-offs allowed for rapid iteration and delivery of a working proof-of-concept while maintaining code quality and core functionality. Also, Friday was also a normal working day at current company.
+
+## Avoiding Hallucination and Repetition
+
+To ensure reliable and accurate LLM responses, several strategies were implemented:
+
+-   **Structured Response Format**: Agents are instructed to return responses in specific JSON formats, reducing ambiguity and making outputs more predictable and parseable.
+-   **Clearly Specified Instructions**: Each agent receives detailed system prompts with explicit role definitions and task instructions, minimizing confusion and off-topic responses.
+-   **Low Temperature Setting**: LLM temperature is set to 0.3 or lower (configurable) to reduce randomness and hallucination, encouraging more focused and deterministic outputs.
+-   **Multiple Safe API Calls**: The system includes retry logic and error handling for LLM API calls, ensuring robustness against transient failures and rate limiting.
+-   **Strong LLM Models**: By using top performing model variants of GPT-4 and Gemini, the system benefits from advanced reasoning capabilities and reduced hallucination rates compared to smaller models.
+-   **Validation and Verification Steps**: The orchestrator includes validation logic to check subtask outputs and ensure they meet expected formats. The aggregator acts as a final reviewer, synthesizing and cross-checking results before presenting the final answer to the user.
