@@ -1,4 +1,4 @@
-# Multi-Agent Task Solver (FastAPI & LangGraph Edition)
+# Multi-Agent Task Solver
 
 This project is a multi-agent task-solving system built with FastAPI and LangGraph. It can take a high-level user request, break it down into subtasks, and orchestrate multiple specialized AI agents to execute them in parallel. The system supports both GPT-4 and Gemini models, integrates real-time web search, and provides a simple UI for interaction.
 
