@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent Task Solver</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+    <div class="container mx-auto p-4">
+        <h1 class="text-4xl font-bold mb-6 text-center text-gray-800">Multi-Agent Task Solver</h1>
+
+        <div class="bg-white shadow-md rounded-lg p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Submit a New Task</h2>
+            <textarea id="userRequest" class="w-full p-3 border border-gray-300 rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" rows="4" placeholder="e.g., Summarize the latest news on AI advancements and provide key statistics on market growth."></textarea>
+            
+            <div class="mb-4">
+                <label class="inline-flex items-center mr-4">
+                    <input type="checkbox" id="useGpt4" class="form-checkbox h-5 w-5 text-blue-600" checked>
+                    <span class="ml-2 text-gray-700">Use GPT-4</span>
+                </label>
+                <label class="inline-flex items-center">
+                    <input type="checkbox" id="useGemini" class="form-checkbox h-5 w-5 text-green-600">
+                    <span class="ml-2 text-gray-700">Use Gemini</span>
+                </label>
+            </div>
+
+            <button id="submitTask" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Submit Task</button>
+        </div>
+
+        <div class="bg-white shadow-md rounded-lg p-6">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Task Status</h2>
+            <div id="taskStatus" class="space-y-4">
+                <p class="text-gray-500">No tasks submitted yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("submitTask" ).addEventListener("click", async () => {
+            const userRequest = document.getElementById("userRequest").value;
+            const useGpt4 = document.getElementById("useGpt4").checked;
+            const useGemini = document.getElementById("useGemini").checked;
+
+            if (!userRequest) {
+                alert("Please enter a request.");
+                return;
+            }
+
+            const response = await fetch("/api/tasks", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ request: userRequest, use_gpt4: useGpt4, use_gemini: useGemini }),
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                displayTask(data.task_id, userRequest);
+                pollTaskStatus(data.task_id);
+            } else {
+                alert(`Error: ${data.message || "Failed to create task"}`);
+            }
+        });
+
+        function displayTask(taskId, userRequest) {
+            const taskStatusDiv = document.getElementById("taskStatus");
+            const newTaskDiv = document.createElement("div");
+            newTaskDiv.id = `task-${taskId}`;
+            newTaskDiv.className = "bg-gray-50 p-4 rounded-md border border-gray-200";
+            newTaskDiv.innerHTML = `\n                <h3 class="text-xl font-medium text-gray-800">Task ID: ${taskId}</h3>\n                <p class="text-gray-600"><strong>Request:</strong> ${userRequest}</p>\n                <p class="text-gray-600"><strong>Status:</strong> <span id="status-${taskId}" class="font-semibold text-blue-500">Pending...</span></p>\n                <div class="mt-2">\n                    <h4 class="text-lg font-medium text-gray-700">Progress Log:</h4>\n                    <ul id="progress-${taskId}" class="list-disc list-inside text-sm text-gray-600"></ul>\n                </div>\n                <div class="mt-4">\n                    <h4 class="text-lg font-medium text-gray-700">Final Result:</h4>\n                    <div id="result-${taskId}" class="bg-gray-100 p-3 rounded-md text-gray-800 whitespace-pre-wrap">No result yet.</div>\n                </div>\n            `;
+            taskStatusDiv.prepend(newTaskDiv);
+        }
+
+        async function pollTaskStatus(taskId) {
+            const statusSpan = document.getElementById(`status-${taskId}`);
+            const progressList = document.getElementById(`progress-${taskId}`);
+            const resultDiv = document.getElementById(`result-${taskId}`);
+
+            const interval = setInterval(async () => {
+                const response = await fetch(`/api/tasks/${taskId}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    statusSpan.textContent = data.status;
+                    statusSpan.className = `font-semibold ${data.status === 'completed' ? 'text-green-600' : data.status === 'error' ? 'text-red-600' : 'text-blue-500'}`;
+
+                    // Update progress log
+                    progressList.innerHTML = ''; // Clear previous log
+                    data.progress.forEach(log => {
+                        const li = document.createElement('li');
+                        li.textContent = `[${new Date(log.timestamp).toLocaleTimeString()}] ${log.message}`;
+                        progressList.appendChild(li);
+                    });
+
+                    if (data.result) {
+                        resultDiv.textContent = data.result;
+                    }
+
+                    if (data.status === "completed" || data.status === "error") {
+                        clearInterval(interval);
+                    }
+                } else {
+                    clearInterval(interval);
+                    statusSpan.textContent = `Error: ${data.detail || "Failed to fetch status"}`;
+                    statusSpan.className = "font-semibold text-red-600";
+                }
+            }, 3000); // Poll every 3 seconds
+        }
+    </script>
+</body>
+</html>
