@@ -64,11 +64,11 @@ class LLMManager:
         self.available_models = []
 
         if use_gpt4 and Config.OPENAI_API_KEY:
-            self.gpt4 = ChatOpenAI(model=Config.OPENAI_MODEL, temperature=0.7, openai_api_key=Config.OPENAI_API_KEY)
+            self.gpt4 = ChatOpenAI(model=Config.OPENAI_MODEL, temperature=0.3, openai_api_key=Config.OPENAI_API_KEY)
             self.available_models.append('gpt4')
         if use_gemini and Config.GOOGLE_API_KEY:
-            # self.gemini = ChatGoogleGenerativeAI(model=Config.GEMINI_MODEL, temperature=0.7, google_api_key=Config.GOOGLE_API_KEY)
-            self.gemini = ChatVertexAI(model=Config.GEMINI_MODEL, temperature=0.7, project_id=Config.GEMINI_PROJECT_ID)
+            # self.gemini = ChatGoogleGenerativeAI(model=Config.GEMINI_MODEL, temperature=0.3, google_api_key=Config.GOOGLE_API_KEY)
+            self.gemini = ChatVertexAI(model=Config.GEMINI_MODEL, temperature=0.3, project_id=Config.GEMINI_PROJECT_ID)
             self.available_models.append('gemini')
         
         if not self.available_models:

@@ -9,10 +9,10 @@ This project is a multi-agent task-solving system built with FastAPI and LangGra
 -   **Multi-Agent System**: Specialized agents (Researcher, Summarizer, Data Analyst, Code Executor) that work together to solve problems.
 -   **Dual LLM Support**: Seamlessly switch between or combine GPT-4 and Gemini models.
 -   **Asynchronous Execution**: Agents and tools run asynchronously for improved performance.
--   **Real Web Search**: Integrated with DuckDuckGo search for real-time information gathering.
+-   **Cascading Web Search**: Multi-provider search with automatic fallback (Tavily → Perplexity → DuckDuckGo) for maximum reliability and quality.
 -   **Code Execution**: A sandboxed Python code executor for data analysis and other tasks.
 -   **Simple UI**: A clean web interface for submitting tasks and viewing results in real-time.
--   **Dockerized**: Comes with `Dockerfile` and `docker-compose.yml` for easy setup and deployment.
+-   **Dockerized**: Comes with `Dockerfile` for easy setup and deployment.
 
 ## Architecture
 
@@ -48,14 +48,19 @@ The system is designed with a modular architecture, centered around a FastAPI ap
     ```bash
     # Create .env file
     cat > .env << EOF
-    # API Keys (Required - at least one)
+    # LLM API Keys (Required - at least one)
     OPENAI_API_KEY=your_openai_api_key_here
     GOOGLE_API_KEY=your_google_api_key_here
+    GEMINI_PROJECT_ID=your_gcp_project_id
+
+    # Search API Keys (Optional - for enhanced web search)
+    TAVILY_API_KEY=your_tavily_api_key_here    # Premium search (recommended)
+    PERPLEXITY_API_KEY=your_perplexity_api_key # AI-powered search (fallback)
+    # Note: DuckDuckGo is used as final fallback (no API key needed)
 
     # Model Configuration
     OPENAI_MODEL=gpt-4o
     GEMINI_MODEL=gemini-2.5-pro
-    GEMINI_PROJECT_ID = <id>
 
     # Search Configuration
     SEARCH_ENABLED=true
@@ -181,6 +186,38 @@ Given the time limitation, certain design decisions and trade-offs were necessar
 -   **Simple UI interaction interface**
 
 These trade-offs allowed for rapid iteration and delivery of a working proof-of-concept while maintaining code quality and core functionality. Also, Friday was also a normal working day at current company.
+
+## Cascading Web Search Strategy
+
+The system implements an intelligent multi-provider web search with automatic fallback for maximum reliability:
+
+### Search Provider Hierarchy
+
+1. **Tavily API** (Primary - Premium)
+   - High-quality, curated search results
+   - Best for accurate, up-to-date information
+   - Requires: `TAVILY_API_KEY` in `.env`
+
+2. **Perplexity AI** (Secondary - AI-Powered)
+   - AI-enhanced search with source citations
+   - Provides contextual summaries
+   - Requires: `PERPLEXITY_API_KEY` in `.env`
+
+3. **DuckDuckGo** (Final Fallback - Free)
+   - No API key required
+   - Reliable basic web search
+   - Rate-limited but includes retry logic
+
+### How It Works
+
+When a researcher agent needs to perform a web search:
+1. Attempts Tavily first (if configured) for premium results
+2. Falls back to Perplexity (if configured) if Tavily fails
+3. Uses DuckDuckGo as the final fallback option
+4. Each provider has error handling and retry logic
+5. Returns graceful error messages if all providers fail
+
+This cascading approach ensures maximum uptime and result quality while maintaining flexibility for different deployment scenarios (free tier vs. premium APIs).
 
 ## Avoiding Hallucination and Repetition
 

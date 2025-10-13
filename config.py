@@ -15,6 +15,11 @@ class Config:
     # Google Gemini Configuration
     GOOGLE_API_KEY: Optional[str] = os.getenv("GOOGLE_API_KEY")
     GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+    GEMINI_PROJECT_ID: Optional[str] = os.getenv("GEMINI_PROJECT_ID")
+    
+    # Search API Keys
+    TAVILY_API_KEY: Optional[str] = os.getenv("TAVILY_API_KEY")
+    PERPLEXITY_API_KEY: Optional[str] = os.getenv("PERPLEXITY_API_KEY")
     
     # Search Configuration
     SEARCH_ENABLED: bool = os.getenv("SEARCH_ENABLED", "true").lower() == "true"
