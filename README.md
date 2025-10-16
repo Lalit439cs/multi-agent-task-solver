@@ -9,7 +9,7 @@ This project is a multi-agent task-solving system built with FastAPI and LangGra
 -   **Multi-Agent System**: Specialized agents (Researcher, Summarizer, Data Analyst, Code Executor) that work together to solve problems.
 -   **Dual LLM Support**: Seamlessly switch between or combine GPT-4 and Gemini models.
 -   **Asynchronous Execution**: Agents and tools run asynchronously for improved performance.
--   **Cascading Web Search**: Multi-provider search with automatic fallback (Tavily → Perplexity → DuckDuckGo) for maximum reliability and quality.
+-   **Enhanced Web Search**: Advanced AI-powered search with Tavily (with relevance scoring & summaries), Perplexity (AI-powered responses), and DuckDuckGo (free fallback). See [SEARCH_TOOLS.md](SEARCH_TOOLS.md) for details.
 -   **Code Execution**: A sandboxed Python code executor for data analysis and other tasks.
 -   **Simple UI**: A clean web interface for submitting tasks and viewing results in real-time.
 -   **Dockerized**: Comes with `Dockerfile` for easy setup and deployment.
@@ -130,6 +130,25 @@ The system is designed with a modular architecture, centered around a FastAPI ap
 
 ### Running Tests
 
+#### Test Web Search Tools (Recommended)
+
+Test all search providers and verify recent enhancements:
+
+```bash
+python3 test_search_tools.py
+```
+
+This comprehensive test suite validates:
+- ✅ Tavily advanced search with AI summaries and relevance scoring
+- ✅ Perplexity with updated model (fixed HTTP 400 issue)
+- ✅ DuckDuckGo with retry logic
+- ✅ Cascading fallback mechanism
+- ✅ Error handling and configuration
+
+**For detailed documentation on search functionality, testing, and troubleshooting, see [SEARCH_TOOLS.md](SEARCH_TOOLS.md).**
+
+#### Test Full Application
+
 A test client script is included to demonstrate how to interact with the API programmatically.
 
 1.  **Ensure the server is running** (see "Running the Application" section above).
@@ -141,14 +160,23 @@ A test client script is included to demonstrate how to interact with the API pro
 
     This script will send several test requests to the API and print the status and results to the console.
 
+#### Test LLM API Connectivity
+
+To verify your LLM API keys before running the application:
+
+```bash
+python3 test_llm_api.py
+```
+
 ## Project Structure
 
 ```
 multi-agent-task-solver/
 ├── .gitignore
-├── .env                # Your API keys and configuration (create this)
+├── .env                   # Your API keys and configuration (create this)
 ├── Dockerfile
-├── README.md
+├── README.md              # This file - project overview
+├── SEARCH_TOOLS.md        # Detailed search tools documentation
 ├── config.py
 ├── main.py
 ├── orchestrator.py
@@ -157,8 +185,9 @@ multi-agent-task-solver/
 │   └── index.html
 ├── temp/
 │   └── .gitkeep
-├── test_client.py      # Test script for API endpoints
-├── test_llm_api.py     # Test script for LLM API connectivity
+├── test_client.py         # Test script for API endpoints
+├── test_llm_api.py        # Test script for LLM API connectivity
+├── test_search_tools.py   # Test script for web search providers
 └── tools.py
 ```
 
@@ -171,8 +200,10 @@ multi-agent-task-solver/
 -   **`config.py`**: A centralized configuration management class that loads settings from environment variables (via `.env` file).
 -   **`static/index.html`**: A single-page UI with JavaScript to interact with the backend API, submit tasks, and poll for status updates.
 -   **`test_llm_api.py`**: A diagnostic script to verify API connectivity with OpenAI and Google Gemini before running the main application.
+-   **`test_search_tools.py`**: Comprehensive test suite for all search providers with detailed output and configuration validation.
 -   **`test_client.py`**: A test script to interact with the running FastAPI server and demonstrate API usage.
 -   **`Dockerfile`**: Defines the containerized environment for running the application with all necessary dependencies.
+-   **`SEARCH_TOOLS.md`**: Detailed documentation for web search functionality, testing procedures, and troubleshooting guide.
 
 ## Trade-offs Made Due to the 24h Constraint
 
@@ -187,37 +218,35 @@ Given the time limitation, certain design decisions and trade-offs were necessar
 
 These trade-offs allowed for rapid iteration and delivery of a working proof-of-concept while maintaining code quality and core functionality. Also, Friday was also a normal working day at current company.
 
-## Cascading Web Search Strategy
+## Enhanced Web Search System
 
-The system implements an intelligent multi-provider web search with automatic fallback for maximum reliability:
+The system implements an intelligent **cascading search strategy** with recent enhancements:
+
+### Recent Updates (October 2024)
+
+#### ✅ Tavily Enhanced
+- **Advanced Search Depth**: Better AI-targeted content extraction
+- **AI-Generated Summaries**: Pre-generated answers included in results
+- **Relevance Scoring**: Each result includes a relevance score (0-1)
+- **Better LLM Context**: Provides both summaries and detailed sources
+
+#### ✅ Perplexity Fixed
+- **Model Updated**: Fixed HTTP 400 error by updating to current `sonar` model
+- **Enhanced Parsing**: Better handling of citations and search results
+- **Error Reporting**: Detailed error messages for troubleshooting
+
+#### ✅ DuckDuckGo Reliable
+- **Retry Logic**: Automatic retries with progressive backoff (2s, 4s, 6s)
+- **Rate Limit Handling**: Gracefully handles rate limiting
+- **No API Key Required**: Always available as final fallback
 
 ### Search Provider Hierarchy
 
-1. **Tavily API** (Primary - Premium)
-   - High-quality, curated search results
-   - Best for accurate, up-to-date information
-   - Requires: `TAVILY_API_KEY` in `.env`
+1. **Tavily** (Primary) → Advanced AI search with summaries & scoring
+2. **Perplexity** (Secondary) → AI-powered conversational search  
+3. **DuckDuckGo** (Fallback) → Free, reliable basic search
 
-2. **Perplexity AI** (Secondary - AI-Powered)
-   - AI-enhanced search with source citations
-   - Provides contextual summaries
-   - Requires: `PERPLEXITY_API_KEY` in `.env`
-
-3. **DuckDuckGo** (Final Fallback - Free)
-   - No API key required
-   - Reliable basic web search
-   - Rate-limited but includes retry logic
-
-### How It Works
-
-When a researcher agent needs to perform a web search:
-1. Attempts Tavily first (if configured) for premium results
-2. Falls back to Perplexity (if configured) if Tavily fails
-3. Uses DuckDuckGo as the final fallback option
-4. Each provider has error handling and retry logic
-5. Returns graceful error messages if all providers fail
-
-This cascading approach ensures maximum uptime and result quality while maintaining flexibility for different deployment scenarios (free tier vs. premium APIs).
+**For comprehensive documentation including testing, troubleshooting, and API details, see [SEARCH_TOOLS.md](SEARCH_TOOLS.md).**
 
 ## Avoiding Hallucination and Repetition
 
