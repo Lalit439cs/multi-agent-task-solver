@@ -15,3 +15,5 @@ python-dotenv==1.1.1
 protobuf>=5.29.5,<6.0.0
 langchain-google-vertexai==2.1.2
 # langchain-google-genai==2.0.8
+tavily-python
+httpx
