@@ -65,3 +65,11 @@ htmlcov/
 # Project specific
 *.pyc
 *.pyo
+
+# Docs like critical analysis, etc
+docs/critical-analysis.md
+docs/testing-plan.md
+docs/implementation-plan.md
+## Vibe coding prompts:
+docs/prompts.md
+git-style.md
